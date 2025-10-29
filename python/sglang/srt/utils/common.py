@@ -147,9 +147,17 @@ def is_host_cpu_x86() -> bool:
         and torch.cpu.is_available()
     )
 
+def is_host_cpu_arm64() -> bool:
+    machine = platform.machine().lower()
+    return (
+        machine in ("aarch64", "arm64")
+        and hasattr(torch, "cpu")
+        and torch.cpu.is_available()
+    )
 
 def is_cpu() -> bool:
-    return os.getenv("SGLANG_USE_CPU_ENGINE", "0") == "1" and is_host_cpu_x86()
+    is_host_cpu_supported = is_host_cpu_x86() or is_host_cpu_arm64()
+    return os.getenv("SGLANG_USE_CPU_ENGINE", "0") == "1" and is_host_cpu_supported
 
 
 def get_cuda_version():
@@ -3048,7 +3056,7 @@ def get_cpu_ids_by_node():
 
 def is_shm_available(dtype, world_size, local_size):
     return (
-        cpu_has_amx_support()
+        (cpu_has_amx_support() or is_host_cpu_arm64())
         and dtype in [torch.bfloat16, torch.float16, torch.float]
         and world_size >= 1
         and world_size == local_size
