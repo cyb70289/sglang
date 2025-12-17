@@ -27,15 +27,23 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+# Build all cpp files in current and sub dirs
+file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
+
 # Platform-specific library directory
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
     set(PLAT_LIB_DIR "/usr/lib/x86_64-linux-gnu")
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+    # Remove arch dependent sources not for me
+    list(FILTER SOURCES EXCLUDE REGEX "/(aarch64|ppc64)/")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
     set(PLAT_LIB_DIR "/usr/lib/aarch64-linux-gnu")
-    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le|ppc64")
+    list(FILTER SOURCES EXCLUDE REGEX "/(x86_64|ppc64)/")
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc64le|ppc64")
     set(PLAT_LIB_DIR "/usr/lib/powerpc64le-linux-gnu")
+    list(FILTER SOURCES EXCLUDE REGEX "/(x86_64|aarch64)/")
 else()
     set(PLAT_LIB_DIR "/usr/lib/${CMAKE_SYSTEM_PROCESSOR}-linux-gnu")
+    list(FILTER SOURCES EXCLUDE REGEX "/(x86_64|aarch64|ppc64)/")
 endif()
 link_directories(${PLAT_LIB_DIR})
 
@@ -73,7 +81,6 @@ else()
     endif()
 endif()
 
-file(GLOB_RECURSE SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 
 if(NOT DEFINED ENV{SGLANG_CPU_FP8_CVT_FTZ})
     set(ENV{SGLANG_CPU_FP8_CVT_FTZ} "1")
